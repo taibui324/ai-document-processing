@@ -1,0 +1,55 @@
+schema: spec-driven
+
+context: |
+  MediConCen Senior Application Architect take-home assessment.
+  Authoritative input: Application Architect Technical Assessment.pdf, all six pages.
+  Required stack: NestJS, Node.js/TypeScript, MySQL 8, Redis where appropriate,
+  Google Gemini, Docker/Compose. Target implementation effort: 6-8 hours.
+  Build a small backend: asynchronous document ingestion, validated AI extraction,
+  resilient vendor submission, durable status, duplicate protection, deterministic
+  failure simulations, migrations, API docs, diagrams, and design rationale.
+  No frontend or full insurance product. Use synthetic documents for demonstrations.
+  Current workspace initially contains assessment documents only; no application exists.
+
+rules:
+  proposal:
+    - Distinguish assessment requirements from chosen implementation defaults.
+  specs:
+    - Make failure handling, restart recovery, and duplicate protection testable.
+  design:
+    - Map assessment sections to implementation decisions and acceptance evidence.
+    - Explain added libraries and the limits of the production-oriented demonstration.
+  tasks:
+    - Order work into time-boxed increments with concrete outputs and verification.
+    - Keep implementation tasks unchecked until implemented and verified.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
