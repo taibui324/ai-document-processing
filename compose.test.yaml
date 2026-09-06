@@ -1,0 +1,25 @@
+name: medicon-test
+services:
+  mysql:
+    image: mysql:8.4.8
+    environment:
+      MYSQL_ROOT_PASSWORD: test-only-root
+      MYSQL_DATABASE: medicon_test
+    ports: ["127.0.0.1:13316:3306"]
+    command: ["--max-allowed-packet=16777216"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ptest-only-root"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    volumes: [test-mysql:/var/lib/mysql]
+  redis:
+    image: redis:8.2.1-alpine
+    ports: ["127.0.0.1:16379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+volumes:
+  test-mysql:
