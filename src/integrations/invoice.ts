@@ -10,7 +10,7 @@ function geminiSchema(value: unknown): unknown {
   if (!value || typeof value !== 'object') return value;
   const output: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value)) {
-    if (['$schema', 'pattern', 'minLength', 'maxLength'].includes(key)) continue;
+    if (['$schema', 'pattern', 'minLength', 'maxLength', 'minItems', 'maxItems'].includes(key)) continue;
     if (key === 'const') output.enum = [child];
     else output[key] = geminiSchema(child);
   }

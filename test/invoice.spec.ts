@@ -10,6 +10,6 @@ it('validates bounded invoices with decimal-string money, real dates, and no une
 });
 it('derives only JSON Schema keywords supported by Gemini structured output', () => {
   const serialized = JSON.stringify(invoiceJsonSchema);
-  for (const keyword of ['$schema', 'const', 'pattern', 'minLength', 'maxLength']) expect(serialized).not.toContain(`"${keyword}"`);
+  for (const keyword of ['$schema', 'const', 'pattern', 'minLength', 'maxLength', 'minItems', 'maxItems']) expect(serialized).not.toContain(`"${keyword}"`);
   expect(invoiceJsonSchema).toHaveProperty('properties.documentType.enum', ['invoice']);
 });
