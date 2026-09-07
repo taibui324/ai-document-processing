@@ -1,0 +1,1 @@
+export const scenarios = ['happy', 'ai-429-then-success', 'ai-429-exhausted', 'ai-empty', 'ai-invalid', 'ai-slow', 'vendor-503-then-success', 'vendor-reset', 'vendor-accept-then-drop', 'vendor-503-exhausted', 'vendor-invalid'] as const;

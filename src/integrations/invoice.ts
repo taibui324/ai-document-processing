@@ -5,5 +5,5 @@ export const invoiceSchema = z.strictObject({
   documentDate: z.iso.date(), totalAmount: money, currency: z.enum(['HKD', 'VND', 'USD']),
   items: z.array(z.strictObject({ description: z.string().trim().min(1).max(300), quantity: z.number().int().min(1).max(1000000), amount: money })).min(1).max(100),
 });
-export const invoiceJsonSchema = z.toJSONSchema(invoiceSchema, { target: 'draft-7' });
+export const invoiceJsonSchema = z.toJSONSchema(invoiceSchema, { target: 'draft-07' });
 export type Invoice = z.infer<typeof invoiceSchema>;

@@ -6,3 +6,8 @@ it('starts mock mode without Gemini credentials and validates real mode and leas
   expect(() => loadConfig({ ...local, LEASE_MS: '60000' })).toThrow('Invalid configuration');
   expect(() => loadConfig({ ...local, APP_ENV: 'production' })).toThrow('Invalid configuration');
 });
+it('rejects unsupported outbound protocols and model IDs that cannot be checkpointed', () => {
+  expect(() => loadConfig({ ...local, GEMINI_BASE_URL: 'ftp://example.com' })).toThrow('Invalid configuration');
+  expect(() => loadConfig({ ...local, VENDOR_BASE_URL: 'file:///' })).toThrow('Invalid configuration');
+  expect(() => loadConfig({ ...local, GEMINI_MODEL: 'x'.repeat(101) })).toThrow('Invalid configuration');
+});

@@ -45,7 +45,7 @@ For application code, dependency, configuration, or infrastructure changes:
 6. For Docker/Compose changes, validate Compose configuration, build affected images, and verify startup, health checks, and an affected request using an isolated test environment.
 7. Fix failures caused by the change and rerun the affected checks. Report pre-existing failures separately; do not silently skip or weaken checks to obtain a passing result.
 
-Typical script names are `lint`, `typecheck`, `build`, `test`, and `test:e2e`; use them only if they exist. This repository currently has no root `package.json`. When implementing the application, provide runnable lint, build, and test scripts using the selected tooling. Never claim a missing or unexecuted check passed.
+Use the root `package.json` scripts: `lint`, `typecheck`, `build`, `test`, `test:integration`, and `test:e2e`. Start the isolated test services as documented in README before integration/E2E checks. Never claim a missing or unexecuted check passed.
 
 For documentation-only edits, check accuracy, links, and formatting; application tests, build, and lint are unnecessary unless executable behavior is affected.
 

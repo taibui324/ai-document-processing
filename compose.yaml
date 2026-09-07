@@ -1,0 +1,113 @@
+name: medicon
+x-environment: &environment
+  APP_ENV: local
+  AI_MODE: ${AI_MODE:-mock}
+  API_SECRET: ${API_SECRET:-local-synthetic-api-secret}
+  VENDOR_SECRET: ${VENDOR_SECRET:-local-synthetic-vendor-secret}
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_NAME: medicon
+  DB_USER: medicon
+  DB_PASSWORD: local-demo-db
+  REDIS_URL: redis://redis:6379
+  GEMINI_BASE_URL: ${GEMINI_BASE_URL:-http://mock-dependencies:4000}
+  GEMINI_MODEL: ${GEMINI_MODEL:-mock-invoice-v1}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  VENDOR_BASE_URL: ${VENDOR_BASE_URL:-http://mock-dependencies:4000}
+x-app: &app
+  image: medicon:local
+  pull_policy: never
+  environment: *environment
+  init: true
+  restart: unless-stopped
+  mem_limit: 384m
+  cpus: 1
+  stop_grace_period: 70s
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs: [/tmp:size=32m]
+services:
+  mysql:
+    image: mysql:8.4.8
+    environment:
+      MYSQL_ROOT_PASSWORD: local-demo-root
+      MYSQL_DATABASE: medicon
+    command: ["--max-allowed-packet=16777216"]
+    volumes: [mysql-data:/var/lib/mysql, ./docker/init.sql:/docker-entrypoint-initdb.d/01-users.sql:ro]
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, 127.0.0.1, -plocal-demo-root]
+      interval: 3s
+      timeout: 2s
+      retries: 60
+  redis:
+    image: redis:8.2.1-alpine
+    command: [redis-server, --appendonly, "yes", --maxmemory, 64mb, --maxmemory-policy, noeviction]
+    volumes: [redis-data:/data]
+    mem_limit: 128m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+  migrate:
+    <<: *app
+    restart: "no"
+    environment:
+      <<: *environment
+      DB_USER: root
+      DB_PASSWORD: local-demo-root
+    command: [node, dist/src/persistence/migrate.js]
+    depends_on:
+      mysql: {condition: service_healthy}
+  mock-dependencies:
+    <<: *app
+    environment:
+      <<: *environment
+      AI_MODE: mock
+      PORT: 4000
+      DB_USER: medicon_mock
+      DB_PASSWORD: local-demo-mock-db
+      MOCK_SCENARIO: ${MOCK_SCENARIO:-happy}
+    command: [node, dist/mock/main.js]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    <<: *app
+    build: .
+    ports: ["127.0.0.1:3000:3000"]
+    command: [node, dist/src/main.js]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  worker:
+    <<: *app
+    environment:
+      <<: *environment
+      PORT: 3001
+    command: [node, dist/src/worker.js]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      mock-dependencies: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  mysql-data:
+  redis-data:
