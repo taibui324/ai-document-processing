@@ -4,7 +4,7 @@ import { Config } from '../src/config';
 import { acceptReceipt } from './receipts';
 import { HttpException } from '@nestjs/common';
 import { timingSafeEqual } from 'node:crypto';
-import { sha256 } from '../src/persistence/jobs';
+import { sha256 } from '../src/common/sha256';
 import { scenarios } from './scenarios';
 export const syntheticInvoice = { documentType: 'invoice', documentNumber: 'SYNTHETIC-001', documentDate: '2024-02-29', totalAmount: '12.50', currency: 'HKD', items: [{ description: 'Synthetic item', quantity: 1, amount: '12.50' }] };
 export function mockServer(db: DataSource, config: Config, scenario = 'happy') {

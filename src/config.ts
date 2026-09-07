@@ -22,7 +22,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   const gemini = new URL(e.GEMINI_BASE_URL), vendor = new URL(e.VENDOR_BASE_URL);
   if (Math.max(e.AI_TIMEOUT_MS, e.VENDOR_TIMEOUT_MS) + e.REDIS_TIMEOUT_MS + 1000 >= e.LEASE_MS ||
       (e.APP_ENV === 'production' && e.AI_MODE !== 'real') ||
-      (e.AI_MODE === 'real' && (!e.GEMINI_API_KEY || !e.GEMINI_MODEL || gemini.origin !== 'https://generativelanguage.googleapis.com' || vendor.protocol !== 'https:')) ||
+      (e.AI_MODE === 'real' && (!e.GEMINI_API_KEY || !e.GEMINI_MODEL || gemini.origin !== 'https://generativelanguage.googleapis.com')) ||
+      (e.APP_ENV === 'production' && vendor.protocol !== 'https:') ||
       [gemini, vendor].some(u => !['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash || u.pathname !== '/') ||
       !['redis:', 'rediss:'].includes(new URL(e.REDIS_URL).protocol)) throw new Error('Invalid configuration: mode, origins, credentials, or timeout/lease safety');
   return {

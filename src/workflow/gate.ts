@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 import { Config } from '../config';
-import { sha256 } from '../persistence/jobs';
+import { sha256 } from '../common/sha256';
 export class ProviderGate {
   readonly client;
   constructor(readonly config: Config) {

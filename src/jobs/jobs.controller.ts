@@ -1,31 +1,25 @@
-import { BadRequestException, CanActivate, Controller, ExecutionContext, Get, Headers, Inject, Injectable, Param, ParseUUIDPipe, Post, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Headers, Inject, Param, ParseUUIDPipe, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiHeader, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { timingSafeEqual } from 'node:crypto';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Config } from '../config';
-import { Jobs, publicJob, sha256 } from '../persistence/jobs';
-import { validatePdf } from './pdf';
-import { acceptedContract, errorContract, jobContract } from './contracts';
 import { logEvent } from '../http';
-@Injectable()
-export class ApiGuard implements CanActivate {
-  constructor(@Inject('CONFIG') private readonly config: Config) {}
-  canActivate(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest<Request>();
-    if (!timingSafeEqual(Buffer.from(sha256(req.get('X-API-Key') ?? '')), Buffer.from(sha256(this.config.apiSecret)))) throw new UnauthorizedException('UNAUTHORIZED');
-    return true;
-  }
-}
+import { Jobs } from '../persistence/jobs';
+import { ApiKeyGuard } from './api-key.guard';
+import { acceptedContract, errorContract, jobContract } from './contracts';
+import { publicJob } from './job.presenter';
+import { validatePdf } from './pdf';
+
 @ApiTags('document-jobs')
 @ApiSecurity('apiKey')
 @ApiResponse({ status: 400, description: 'Invalid input.', schema: errorContract })
 @ApiResponse({ status: 401, description: 'Invalid API credential.', schema: errorContract })
 @ApiResponse({ status: 503, description: 'Persistence unavailable.', schema: errorContract })
-@UseGuards(ApiGuard)
+@UseGuards(ApiKeyGuard)
 @Controller('api/v1/document-jobs')
 export class JobsController {
   constructor(private readonly jobs: Jobs, @Inject('CONFIG') private readonly config: Config) {}
+
   @Post()
   @UseInterceptors(FileInterceptor('document'))
   @ApiConsumes('multipart/form-data')
@@ -48,6 +42,7 @@ export class JobsController {
     res.status(replay ? 200 : 202).setHeader('Location', statusUrl);
     return { jobId: job.id, status: job.status, statusUrl, createdAt: job.created_at };
   }
+
   @Get(':jobId')
   @ApiResponse({ status: 200, description: 'Durable stage, attempts, retry schedule, and validated result when available.', schema: jobContract })
   @ApiResponse({ status: 404, description: 'Unknown job.' })
