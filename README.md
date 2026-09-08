@@ -103,7 +103,7 @@ For an optional live synthetic smoke, configure `AI_MODE=real`, `GEMINI_API_KEY`
 
 ## Design and evidence
 
-[Architecture, diagrams, trade-offs, and evidence map](docs/architecture.md) · [Implementation and verification record](docs/implementation-evidence.md) · [OpenSpec task checklist](openspec/changes/build-resilient-document-processing/tasks.md)
+[Architecture, diagrams, trade-offs, and evidence map](docs/architecture.md) · [Implementation and verification record](docs/implementation-evidence.md)
 
 Supporting libraries are limited to NestJS/Swagger (HTTP and API contracts), TypeORM/mysql2 (migrations and transactions), Redis client (coordination), Zod (validation/schema derivation), and pdf-lib (bounded structural checks and synthetic fixtures). HTTP, hashing, UUIDs, cancellation, worker isolation, and process handling use Node's standard library. Jest/Supertest are test-only.
 
