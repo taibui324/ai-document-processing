@@ -1,8 +1,8 @@
 import { spawn, ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
 import { harness } from './harness';
-import { createServer } from 'node:net';
 import { mockServer } from '../mock/server';
+import { availablePort } from './helpers';
 
 it('bounds an outbound call by the remaining lease as well as the stage budget', async () => {
   const h = await harness('ai-slow');
@@ -26,13 +26,14 @@ it('bounds an outbound call by the remaining lease as well as the stage budget',
 
 it('runs the worker executable and releases resources on SIGTERM', async () => {
   const h = await harness();
+  const port = await availablePort();
   let child: ChildProcess | undefined;
   try {
     const id = await h.submit();
     child = spawn(process.execPath, ['dist/src/worker.js'], {
       env: { ...process.env, APP_ENV: 'test', AI_MODE: 'mock', API_SECRET: h.config.apiSecret, VENDOR_SECRET: h.config.vendorSecret,
         DB_HOST: h.config.db.host, DB_PORT: String(h.config.db.port), DB_USER: h.config.db.username, DB_PASSWORD: h.config.db.password, DB_NAME: h.config.db.database,
-        REDIS_URL: h.config.redisUrl, GEMINI_BASE_URL: h.config.geminiOrigin, VENDOR_BASE_URL: h.config.vendorOrigin, POLL_MS: '20', PACE_MS: '1', PORT: '14001' },
+        REDIS_URL: h.config.redisUrl, GEMINI_BASE_URL: h.config.geminiOrigin, VENDOR_BASE_URL: h.config.vendorOrigin, POLL_MS: '20', PACE_MS: '1', PORT: String(port) },
       stdio: 'ignore',
     });
     const end = Date.now() + 5000;
@@ -42,7 +43,7 @@ it('runs the worker executable and releases resources on SIGTERM', async () => {
       job = await h.jobs.get(id);
     }
     expect(job.status).toBe('COMPLETED');
-    expect(await fetch('http://127.0.0.1:14001/health/ready').then(r => r.status)).toBe(200);
+    expect(await fetch(`http://127.0.0.1:${port}/health/ready`).then(r => r.status)).toBe(200);
     const exited = once(child, 'exit'); child.kill('SIGTERM');
     expect(await exited).toEqual([0, null]);
   } finally {
@@ -54,9 +55,7 @@ it('aborts an active HTTP request on shutdown and resumes its original budget af
   const h = await harness('ai-slow');
   let child: ChildProcess | undefined;
   let replacement: ReturnType<typeof mockServer> | undefined;
-  const reserve = createServer(); await new Promise<void>(resolve => reserve.listen(0, '127.0.0.1', resolve));
-  const address = reserve.address(); const port = typeof address === 'object' && address ? address.port : 14002;
-  await new Promise<void>(resolve => reserve.close(() => resolve()));
+  const port = await availablePort();
   const start = () => spawn(process.execPath, ['dist/src/worker.js'], { env: { ...process.env,
     APP_ENV: 'test', AI_MODE: 'mock', API_SECRET: h.config.apiSecret, VENDOR_SECRET: h.config.vendorSecret,
     DB_HOST: h.config.db.host, DB_PORT: String(h.config.db.port), DB_USER: h.config.db.username, DB_PASSWORD: h.config.db.password, DB_NAME: h.config.db.database,
