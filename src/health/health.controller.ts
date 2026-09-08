@@ -4,6 +4,8 @@ import { ProviderGate } from '../workflow/gate';
 
 @Controller('health')
 export class HealthController {
+  private readinessProbe?: Promise<unknown>;
+
   constructor(@Optional() @Inject(DataSource) private readonly db?: DataSource, @Optional() private readonly gate?: ProviderGate) {}
 
   @Get('live')
@@ -14,8 +16,13 @@ export class HealthController {
     let timer: NodeJS.Timeout | undefined;
     try {
       if (!this.db?.isInitialized || !this.gate) throw new Error('Dependencies unavailable');
+      if (!this.readinessProbe) {
+        const dependencies = [this.db.query('SELECT 1'), this.gate.ready()];
+        this.readinessProbe = Promise.all(dependencies);
+        void Promise.allSettled(dependencies).then(() => { this.readinessProbe = undefined; });
+      }
       await Promise.race([
-        Promise.all([this.db.query('SELECT 1'), this.gate.ready()]),
+        this.readinessProbe,
         new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Readiness timeout')), 1000); }),
       ]);
       return { status: 'ready' };

@@ -10,8 +10,6 @@
 
 Read relevant requirements, OpenSpec artifacts, existing code, and repository guidance before editing. Trace callers and dependencies before fixing a bug. Reuse existing patterns and installed libraries. Add supporting libraries only for a concrete requirement; explain why existing tools are insufficient. Keep changes focused and avoid speculative infrastructure.
 
-If `.ay/` exists, use its tracking files as the coordination source of truth. Do not create AY state unless the user requests an AY workflow.
-
 ## Implementation workflow: Ponytail + TDD
 
 Use Ponytail at **full** intensity and test-driven development (TDD) together for every implementation task unless the user explicitly overrides them. Load the available Ponytail and TDD skills when provided by the environment; otherwise follow the rules below. These are working practices, not background processes.
