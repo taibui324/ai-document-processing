@@ -1,14 +1,22 @@
 import { createClient } from 'redis';
 import { Config } from '../config';
-import { sha256 } from '../persistence/jobs';
+import { sha256 } from '../common/sha256';
 export class ProviderGate {
   readonly client;
   constructor(readonly config: Config) {
     this.client = createClient({ url: config.redisUrl, disableOfflineQueue: true, socket: { connectTimeout: config.redisTimeoutMs, reconnectStrategy: () => 200 } });
     this.client.on('error', () => {});
   }
-  async open() { await this.client.connect(); }
-  async close() { this.client.destroy(); }
+  async open() {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      await Promise.race([this.client.connect(), new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('REDIS_UNAVAILABLE')), this.config.redisTimeoutMs); })]);
+    } finally { clearTimeout(timer); }
+  }
+  async close() { if (this.client.isOpen) this.client.destroy(); }
+  async onModuleInit() { try { await this.open(); } catch { /* Readiness remains degraded while the client reconnects. */ } }
+  async onModuleDestroy() { await this.close(); }
+  async ready() { return this.client.withCommandOptions({ timeout: this.config.redisTimeoutMs }).ping(); }
   async enter(scope: string): Promise<number> {
     const prefix = 'medicon:gate:{' + sha256(scope) + '}';
     return Number(await this.client.withCommandOptions({ timeout: this.config.redisTimeoutMs }).eval(`

@@ -3,7 +3,7 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { invoiceSchema } from '../src/integrations/invoice';
-import { sha256 } from '../src/persistence/jobs';
+import { sha256 } from '../src/common/sha256';
 const submissionSchema = z.strictObject({ jobId: z.uuid(), schemaVersion: z.literal('invoice-v1'), extraction: invoiceSchema });
 export async function acceptReceipt(db: DataSource, key: string, payload: unknown): Promise<{ submissionId: string; status: 'accepted' }> {
   const parsed = submissionSchema.safeParse(payload);

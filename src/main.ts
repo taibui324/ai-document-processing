@@ -11,8 +11,7 @@ async function main() {
   const app = await NestFactory.create(AppModule.register(config, db), { logger: false });
   configureHttp(app, config);
   SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('Document processing').setVersion('1').addApiKey({ type: 'apiKey', in: 'header', name: 'X-API-Key' }, 'apiKey').build()));
-  app.enableShutdownHooks();
   await app.listen(config.port, '0.0.0.0');
-  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { void db.destroy(); });
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { void (async () => { await app.close(); await db.destroy(); })().catch(() => { process.exitCode = 1; }); });
 }
 void main().catch(() => { console.error('API startup failed: verify configuration and dependencies'); process.exitCode = 1; });

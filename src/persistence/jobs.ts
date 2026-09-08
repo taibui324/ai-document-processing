@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
-export const sha256 = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+import { sha256 } from '../common/sha256';
 export type Stage = 'AI' | 'VENDOR';
 export type JobStatus = 'RECEIVED' | 'AI_PROCESSING' | 'RETRY_WAIT' | 'VENDOR_PENDING' | 'VENDOR_SUBMITTING' | 'COMPLETED' | 'FAILED';
 export interface Job {
@@ -42,17 +42,4 @@ export class Jobs {
     if (!row) throw new NotFoundException('JOB_NOT_FOUND');
     return row.content;
   }
-}
-export function publicJob(job: Job) {
-  return {
-    jobId: job.id, status: job.status, stage: job.stage,
-    attempts: { ai: job.ai_attempts, vendor: job.vendor_attempts },
-    createdAt: job.created_at, updatedAt: job.updated_at, completedAt: job.completed_at,
-    nextAttemptAt: job.status === 'RETRY_WAIT' ? job.next_attempt_at : null,
-    error: job.last_error_code ? { code: job.last_error_code, message: job.stage === 'VENDOR' && job.status === 'FAILED'
-      ? 'Delivery is unconfirmed; remote acceptance may have occurred. Reconciliation may be required.'
-      : 'Processing could not finish this stage.', retryable: job.status === 'RETRY_WAIT' } : null,
-    ...(job.extraction_json ? { extraction: job.extraction_json, schemaVersion: job.schema_version,
-      delivery: job.status === 'COMPLETED' ? 'accepted' : 'unconfirmed', vendorReceiptId: job.vendor_receipt_id } : {}),
-  };
 }

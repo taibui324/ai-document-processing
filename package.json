@@ -13,11 +13,11 @@
     "test": "jest --runInBand --selectProjects unit",
     "test:integration": "jest --runInBand --selectProjects integration",
     "test:e2e": "jest --runInBand --selectProjects e2e",
-    "start": "node dist/src/main.js",
-    "start:worker": "node dist/src/worker.js",
-    "migrate": "node dist/src/persistence/migrate.js",
-    "start:mock": "node dist/mock/main.js",
-    "demo": "node dist/scripts/demo.js"
+    "start": "node --env-file-if-exists=.env dist/src/main.js",
+    "start:worker": "node --env-file-if-exists=.env dist/src/worker.js",
+    "migrate": "node --env-file-if-exists=.env dist/src/persistence/migrate.js",
+    "start:mock": "node --env-file-if-exists=.env dist/mock/main.js",
+    "pretest:e2e": "npm run build"
   },
   "dependencies": {
     "@nestjs/common": "11.2.3",

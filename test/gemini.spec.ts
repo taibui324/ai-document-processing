@@ -11,7 +11,8 @@ it('extracts through REST with a fixed schema and rejects unusable, blocked, or 
   const client = new GeminiClient(testConfig({ GEMINI_BASE_URL: 'http://127.0.0.1:' + (server.address() as AddressInfo).port }));
   try {
     await expect(client.extract(Buffer.from('%PDF-synthetic'), 'job', 1000)).resolves.toEqual(invoice);
-    expect(received).toHaveProperty('generationConfig.responseJsonSchema'); expect(received).toHaveProperty('systemInstruction'); expect(received).not.toHaveProperty('tools');
+    expect(received).toHaveProperty('generationConfig.responseJsonSchema'); expect(received).not.toHaveProperty('generationConfig.thinkingConfig');
+    expect(received).toHaveProperty('systemInstruction'); expect(received).not.toHaveProperty('tools');
     for (const bad of [{}, { candidates: [] }, { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '' }] } }] },
       { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{secret invalid' }] } }] },
       { candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: JSON.stringify(invoice) }] } }] }]) {

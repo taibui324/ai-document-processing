@@ -5,6 +5,16 @@ import { randomUUID } from 'node:crypto';
 import { ProviderFailure, retryDecision } from './retry';
 export class WorkflowStore {
   constructor(readonly db: DataSource, readonly config: Config) {}
+  async acknowledged(claim: Job, receipt: string): Promise<boolean> {
+    if (claim.stage !== 'VENDOR') return false;
+    return (await this.fenced(claim, async (tx, job, now) => {
+      if (!job.vendor_deadline || now >= job.vendor_deadline || job.vendor_attempts === 0) return false;
+      await this.audit(tx, job, now, 'SUCCEEDED');
+      await tx.query(`UPDATE document_jobs SET status='COMPLETED',vendor_receipt_id=?,lease_token=NULL,lease_expires_at=NULL,
+        last_error_code=NULL,updated_at=?,completed_at=? WHERE id=?`, [receipt, now, now, job.id]);
+      return true;
+    })) ?? false;
+  }
   async failed(claim: Job, error: ProviderFailure): Promise<boolean> {
     return (await this.fenced(claim, async (tx, job, now) => {
       const unusable = job.unusable_results + (error.unusable && job.stage === 'AI' ? 1 : 0);
